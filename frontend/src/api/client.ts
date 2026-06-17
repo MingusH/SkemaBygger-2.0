@@ -93,6 +93,7 @@ export interface Subject {
   double_lessons: boolean
   is_elective_slot: boolean
   priority: number
+  add_extra: boolean
   ministry_hours: { grade: number; hours_per_week: number }[]
 }
 
@@ -248,7 +249,7 @@ export const subjectsApi = {
   list: (schoolId: number) => api.get<Subject[]>(`/schools/${schoolId}/subjects`).then((r) => r.data),
   create: (schoolId: number, body: { name: string; short_code: string; category?: string; color_hex?: string | null; required_room_type?: string | null; double_lessons?: boolean; priority?: number }) =>
     api.post<Subject>(`/schools/${schoolId}/subjects`, body).then((r) => r.data),
-  update: (schoolId: number, id: number, body: { requires_special_room?: boolean; required_room_type?: string | null; color_hex?: string | null; double_lessons?: boolean; priority?: number }) =>
+  update: (schoolId: number, id: number, body: { requires_special_room?: boolean; required_room_type?: string | null; color_hex?: string | null; double_lessons?: boolean; priority?: number; add_extra?: boolean }) =>
     api.patch<Subject>(`/schools/${schoolId}/subjects/${id}`, body).then((r) => r.data),
 }
 

@@ -34,6 +34,7 @@ class SubjectUpdate(BaseModel):
     color_hex: str | None = None
     double_lessons: bool | None = None
     priority: int | None = None
+    add_extra: bool | None = None
 
 
 class SubjectRead(BaseModel):
@@ -48,6 +49,7 @@ class SubjectRead(BaseModel):
     double_lessons: bool = False
     is_elective_slot: bool
     priority: int = 100
+    add_extra: bool = True
     ministry_hours: list[MinistryHoursRead] = []
     elective_meta: ElectiveSlotMetaRead | None = None
     model_config = ConfigDict(from_attributes=True)

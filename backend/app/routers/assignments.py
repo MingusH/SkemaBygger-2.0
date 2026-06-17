@@ -142,8 +142,10 @@ def bulk_auto_assign(school_id: int, db: Session = Depends(get_db), _=Depends(re
         target = target_periods_for_grade(grade, sum_min) - band_hours_by_grade.get(grade, 0)
         surplus = max(0, target - sum_min)
 
-        # Only boost subjects already taught at this grade (have a ministry minimum).
-        eligible = [s for s in ranked_subjects if s.id in base]
+        # Only boost subjects already taught at this grade (have a ministry minimum) AND
+        # flagged add_extra — excluded subjects (e.g. Idræt) stay at their minimum so a
+        # double-lesson subject never ends up with an odd, lone single period.
+        eligible = [s for s in ranked_subjects if s.id in base and s.add_extra]
         i = 0
         while surplus > 0 and eligible:
             base[eligible[i % len(eligible)].id] += 1

@@ -34,6 +34,11 @@ class Subject(Base):
     # recreation and applies to every school that seeds this subject.
     double_lessons: Mapped[bool] = mapped_column(Boolean, default=False)
     is_elective_slot: Mapped[bool] = mapped_column(Boolean, default=False)
+    # When False, the subject only ever gets its ministry minimum — it is excluded from
+    # the surplus ("extra") lessons distributed to fill the grade total. Turn this off for
+    # subjects that must not be padded (e.g. Idræt, where an odd extra lesson would leave a
+    # lone single period instead of a clean double).
+    add_extra: Mapped[bool] = mapped_column(Boolean, default=True)
     # Lower = higher priority. Controls which subjects receive the surplus hours
     # above the ministry minimum when auto-assigning toward the grade total.
     priority: Mapped[int] = mapped_column(Integer, default=100)

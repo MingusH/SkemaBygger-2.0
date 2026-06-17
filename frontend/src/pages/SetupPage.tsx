@@ -62,6 +62,13 @@ export default function SetupPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['subjects', sid] }),
   })
 
+  // Whether a subject may receive surplus ("extra") lessons above the ministry minimum.
+  const setSubjectAddExtra = useMutation({
+    mutationFn: ({ id, add_extra }: { id: number; add_extra: boolean }) =>
+      subjectsApi.update(sid, id, { add_extra }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['subjects', sid] }),
+  })
+
   // ── Teachers ──────────────────────────────────────────────────────────────
   const [teacherForm, setTeacherForm] = useState({ first_name: '', last_name: '', short_code: '', email: '' })
   const [teacherSubjectIds, setTeacherSubjectIds] = useState<number[]>([])
@@ -290,10 +297,11 @@ export default function SetupPage() {
               <p className="text-xs font-medium text-gray-600 mb-1">Fag-prioritet</p>
               <p className="text-xs text-gray-400 mb-3">
                 Når skemaet fyldes op ud over ministeriets minimum, får fag øverst de ekstra timer først (timebanken).
+                Fjern et fag fra listen for kun at give det ministeriets minimum — fx Idræt, så det ikke får en løs enkelt-lektion.
               </p>
               <div className="max-w-md divide-y divide-gray-100">
                 {(() => {
-                  const ordered = subjects.filter((s) => !s.is_elective_slot)
+                  const ordered = subjects.filter((s) => !s.is_elective_slot && s.add_extra)
                   return ordered.map((s, i) => (
                     <div key={s.id} className="py-1.5 flex items-center justify-between text-sm">
                       <span className="flex items-center gap-2">
@@ -317,11 +325,43 @@ export default function SetupPage() {
                         >
                           ▼
                         </button>
+                        <button
+                          onClick={() => setSubjectAddExtra.mutate({ id: s.id, add_extra: false })}
+                          disabled={setSubjectAddExtra.isPending}
+                          className="ml-1 px-1.5 py-0.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-30"
+                          title="Fjern fra ekstra-timer (kun ministeriets minimum)"
+                        >
+                          ✕
+                        </button>
                       </span>
                     </div>
                   ))
                 })()}
               </div>
+
+              {/* Excluded subjects (add_extra = false) */}
+              {(() => {
+                const excluded = subjects.filter((s) => !s.is_elective_slot && !s.add_extra)
+                if (excluded.length === 0) return null
+                return (
+                  <div className="mt-4">
+                    <p className="text-xs font-medium text-gray-600 mb-1.5">Får kun ministeriets minimum (ingen ekstra timer)</p>
+                    <div className="flex flex-wrap gap-2">
+                      {excluded.map((s) => (
+                        <button
+                          key={s.id}
+                          onClick={() => setSubjectAddExtra.mutate({ id: s.id, add_extra: true })}
+                          disabled={setSubjectAddExtra.isPending}
+                          className="text-xs px-2 py-1 rounded-full border border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 disabled:opacity-30"
+                          title="Tilføj til ekstra-timer igen"
+                        >
+                          + {s.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           </>
         )}
