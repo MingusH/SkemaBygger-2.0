@@ -595,10 +595,29 @@ def _solve(schedule_id: int, db: Session) -> None:
     solver.parameters.num_search_workers = settings.solver_num_workers
     status = solver.solve(model)
 
+    # Solve metrics. status OPTIMAL = proven best; FEASIBLE = hit the time limit with a
+    # non-proven (often lower-quality) solution — raise SOLVER_MAX_TIME_SECONDS and/or
+    # SOLVER_NUM_WORKERS to improve it. optimality_gap ~0 means more time won't help.
+    _feasible = status in (cp_model.OPTIMAL, cp_model.FEASIBLE)
+    _obj = solver.objective_value if _feasible else None
+    _bound = solver.best_objective_bound if _feasible else None
+    _gap = round(abs(_obj - _bound) / max(1.0, abs(_obj)), 4) if (_obj is not None and _bound is not None) else None
+    solve_metrics = {
+        "or_tools_status": solver.status_name(status),
+        "wall_time": round(solver.wall_time, 2),
+        "num_workers": settings.solver_num_workers,
+        "time_limit_seconds": settings.solver_max_time_seconds,
+        "objective": _obj,
+        "objective_best_bound": _bound,
+        "optimality_gap": _gap,
+    }
+    # Printed (not logged) so it reliably shows in Render/stdout logs.
+    print(f"[solver] schedule={schedule.id} " + " ".join(f"{k}={v}" for k, v in solve_metrics.items()), flush=True)
+
     if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         schedule.status = ScheduleStatus.FAILED
         schedule.algorithm_params = {
-            "or_tools_status": solver.status_name(status),
+            **solve_metrics,
             "hint": "INFEASIBLE usually means not enough rooms of a required type "
                     "(e.g. too many Idræt lessons for the gyms), the shared pool is "
                     "overfull, hard unavailabilities leave no valid placement, or an "
@@ -710,15 +729,12 @@ def _solve(schedule_id: int, db: Session) -> None:
     schedule.generated_at = datetime.now(timezone.utc)
     schedule.score = None
     schedule.algorithm_params = {
-        "or_tools_status": solver.status_name(status),
-        "wall_time": solver.wall_time,
+        **solve_metrics,
         "lessons_scheduled": n_lessons,
         "pool_lessons": pool_count,
         "lessons_not_in_preferred_room": not_in_preferred,
         "elective_bands": len(bands),
         "elective_band_entries": band_entries,
-        "objective": solver.objective_value,
-        "objective_best_bound": solver.best_objective_bound,
         "daily_overload_lessons": sum(solver.value(v) for v in overage_vars),
     }
     db.commit()

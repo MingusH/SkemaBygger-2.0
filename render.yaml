@@ -25,7 +25,9 @@ services:
       - key: SECRET_KEY
         generateValue: true        # Render generates a strong secret
       - key: SOLVER_NUM_WORKERS
-        value: "1"                 # safe for the free fractional CPU
+        value: "1"                 # safe for the free fractional CPU; raise cautiously (RAM)
+      - key: SOLVER_MAX_TIME_SECONDS
+        value: "60"                # raise (e.g. 180-300) to recover quality on slow CPUs
       - key: PUBLIC_BASE_URL
         sync: false                # set to this service's URL, e.g. https://skemabygger-api.onrender.com
       - key: CORS_ORIGINS

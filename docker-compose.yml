@@ -25,6 +25,10 @@ services:
       # Public HTTPS URL the MCP/OAuth server is reached at. For local Claude Desktop
       # testing, point this at an https tunnel (e.g. cloudflared) in front of :8000.
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8000}
+      # Local dev has real cores — use a solver portfolio for good schedules. (Render
+      # free tier overrides this to 1 via its own env.) Override with host env vars.
+      SOLVER_NUM_WORKERS: ${SOLVER_NUM_WORKERS:-8}
+      SOLVER_MAX_TIME_SECONDS: ${SOLVER_MAX_TIME_SECONDS:-60}
     depends_on:
       db:
         condition: service_healthy
